@@ -183,7 +183,7 @@ done
 
 #If there are no failed apps, give a good message. Otherwise inform the user.
 if [ -z "$FAILED_APP_INSTALLS" ]; then
-	swift_dialog "Updates Completed Successfully" "Thanks for your help keeping your apps up to date. \n\nIf you have any issues or questions please submit a ticket to helpdesk@secondsonconsulting.com"  --overlayicon "/System/Applications/App Store.app" &
+	swift_dialog "Updates Completed Successfully" "Thanks for your help keeping your apps up to date.\n\n It's a good idea to reboot your computer now.\n\nIf you have any issues or questions please submit a ticket to helpdesk@secondsonconsulting.com"  --overlayicon "/System/Applications/App Store.app" &
 else
 	swift_dialog "Don't panic!" "There was an issue updating the following apps: $FAILED_APP_INSTALLS\n\nYour apps are probably still usable, they just couldn't be updated for some reason.\n\nPlease launch and test.\n\nIf you're having issues with these applications please submit a ticket to helpdesk@secondsonconsulting.com"  --overlayicon "/System/Applications/App Store.app" &
 	caffexit 10
