@@ -1,8 +1,18 @@
 #!/bin/zsh
 
-#installomatorWrapper.sh v.0.1.5
+#installomatorWrapper.sh v.0.1.6
 
 DEBUG=1
+
+#Debug messaging
+function_debug_message()
+{
+
+if [ $DEBUG = 1 ]; then
+	/bin/echo "$@"
+fi
+
+}
 
 # No sleeping
 /usr/bin/caffeinate -d -i -m -u &
@@ -21,12 +31,12 @@ swift_dialog()
 {
 
 if [ -e /usr/local/bin/dialog ]; then
-	/usr/local/bin/dialog --titlefont color="#a62524" --title "$1" --message "$2" --moveable\
+	/usr/local/bin/dialog --titlefont color="#a62524" --title "$1" --message "$2" --moveable --ignorednd\
 	--icon "/Library/PreferencePanes/MonitoringClient.prefPane/Contents/Resources/MonitoringClient.icns" \
 	$3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14 $15 $16 $17 $18 $19 $20 $21 $22 $23 $24 $25 $26 $27 $28 $29 $30
 	
 	if [ $? = 2 ]; then
-		exit 99
+		caffexit 99
 	fi
 
 fi
@@ -46,7 +56,7 @@ fi
 ### Verify Input ###
 
 if [ $# -eq 0 ]; then
-	echo "No arguments provided. Exiting"
+	/bin/echo "No arguments provided. Exiting"
 	caffexit 1
 fi
 
@@ -59,12 +69,26 @@ LOG_FILE="$LOG_FOLDER"/"$LOG_DATE"_installomatorWrapper.log
 MANIFEST_FILE="$LOG_FOLDER"/"$LOG_DATE"_Manifest-installomatorWrapper.log
 
 #Create log folder
-if [ ! -d $LOG_FOLDER ]; then
+if [ ! -d "$LOG_FOLDER" ]; then
 	mkdir -p $LOG_FOLDER
 	if [ $? != 0 ]; then
-		echo "Failed to create log folder"
+		/bin/echo "Failed to create log folder"
 		caffexit 1
 	fi
+fi
+
+#Create log
+touch $LOG_FILE
+if [ $? != 0 ]; then
+	/bin/echo "Failed to create "$LOG_FILE""
+	caffexit 1
+fi
+
+#Create manifest
+touch $MANIFEST_FILE
+if [ $? != 0 ]; then
+	/bin/echo "Failed to create "$MANIFEST_FILE""
+	caffexit 1
 fi
 
 #Rotate logs, keeping only 10 latest
@@ -80,39 +104,29 @@ done
 
 #If there are greater than LOG_MAX variable files, delete the oldest (sorting based on date)
 if [ $LOG_COUNT -ge "$LOG_MAX" ] ; then
-	echo "Rotating logs. Deleting file: ${LOG_ARRAY[1]}" >> $LOG_FILE 2>&1
+	/bin/echo "Rotating logs. Deleting file: ${LOG_ARRAY[1]}" >> $LOG_FILE 2>&1
 	rm ${LOG_ARRAY[1]}
 	if [ $? != 0 ]; then
-		echo "Failed to rotate logs"
+		/bin/echo "Failed to rotate logs"
 		caffexit 1
 	fi
 fi
 
-#Create log
-touch $LOG_FILE
-if [ $? != 0 ]; then
-	echo "Failed to create "$LOG_FILE""
-	caffexit 1
-fi
-
-#Create manifest
-touch $MANIFEST_FILE
-if [ $? != 0 ]; then
-	echo "Failed to create "$MANIFEST_FILE""
-	caffexit 1
-fi
+#If debug is on, give log and manifest path in standard out
+function_debug_message "Log File: "$LOG_FILE""
+function_debug_message "Manifest File: "$MANIFEST_FILE""
 
 #Test if Installomator is present
 
 if [ ! -f /usr/local/Installomator/Installomator.sh ] ; then
-	echo "FAIL: Installomator.sh NOT FOUND"
-	echo ""$LOG_DATE": Installomator Fail - Script not installed" >> $MANIFEST_FILE
+	/bin/echo "FAIL: Installomator.sh NOT FOUND"
+	/bin/echo ""$LOG_DATE": Installomator Fail - Script not installed" >> $MANIFEST_FILE
 	caffexit 1
 fi
 
 ##SCRIPT STARTS HERE##
 
-swift_dialog "App Updates Needed" "This process typically takes about 15 minutes, and its a good idea to reboot after.\n\nPlease save and close any open documents before going forward.\n\nClick Continue with Updates to begin." --overlayicon "/System/Applications/App Store.app" --button1text "Continue with Updates" --button2text "Cancel"
+swift_dialog "App Installs and Updates Needed" "This process typically takes about 15 minutes, and its a good idea to reboot after.\n\nPlease save and close any open documents before going forward.\n\nClick Continue with Updates to begin." --overlayicon "/System/Applications/App Store.app" --button1text "Continue with Updates" --button2text "Cancel"
 
 #Set variable of number of apps to install, this is used for the progress bar
 APP_COUNT=$#
@@ -126,12 +140,11 @@ swift_dialog "Updating your apps" "Updates are in progress..." --progress $APP_C
 sleep 1
 swift_dialog_command "progress: $APP_COMPLETIONS"
 swift_dialog_command "progresstext: installomator"
-sleep 10
 
 /usr/local/Installomator/Installomator.sh installomator >> $LOG_FILE  2>&1
 if [ $? != 0 ]; then
-	echo "FAILED TO UPDATE INSTALLOMATOR"
-	echo ""$LOG_DATE": Installomator failed to update" >> $MANIFEST_FILE
+	/bin/echo "FAILED INSTALL: installomator"
+	/bin/echo ""$LOG_DATE": Installomator failed to update" >> $MANIFEST_FILE
 fi
 
 #Install each app
@@ -144,11 +157,11 @@ do
     sleep 1
     /usr/local/Installomator/Installomator.sh $APPLICATION >> $LOG_FILE  2>&1
     if [ $? != 0 ]; then
-    	FAILED_APP_INSTALLS+=($APPLICATION)
-		echo ""$LOG_DATE": Installomator Fail - "$APPLICATION" failed to install" >> $MANIFEST_FILE
+    	FAILED_APP_INSTALLS+=($APPLICATION",")
+		/bin/echo ""$LOG_DATE": Installomator Fail - "$APPLICATION" failed to install" >> $MANIFEST_FILE
     else
     	SUCCESSFUL_APP_INSTALLS+=($APPLICATION)
-		echo ""$LOG_DATE": Installomator Success - "$APPLICATION" installed successfully" >> $MANIFEST_FILE
+		/bin/echo ""$LOG_DATE": Installomator Success - "$APPLICATION" installed successfully" >> $MANIFEST_FILE
     fi
     #Set completion variable for swiftdialog
     APP_COMPLETIONS=$((APP_COMPLETIONS+1))
@@ -158,15 +171,13 @@ done
 
 swift_dialog_command "quit:"
 
-if [ $DEBUG = 1 ] ; then
-	echo "Log File: "$LOG_FILE""
-	for i in ${SUCCESSFUL_APP_INSTALLS[@]}; do
-		echo "SUCCESS: "$i""
-	done
-fi
+#If debug is on, report successful apps to standard out
+for i in ${SUCCESSFUL_APP_INSTALLS[@]}; do
+	function_debug_message "SUCCESS: "$i""
+done
 
 for i in ${FAILED_APP_INSTALLS[@]}; do
-	echo "FAILED INSTALL: "$i""
+	/bin/echo "FAILED INSTALL: "$i""
 done
 
 
@@ -174,7 +185,8 @@ done
 if [ -z "$FAILED_APP_INSTALLS" ]; then
 	swift_dialog "Updates Completed Successfully" "Thanks for helping keep your apps up to date. \n\nIf you have any issues or questions please submit a ticket to helpdesk@secondsonconsulting.com"  --overlayicon "/System/Applications/App Store.app" &
 else
-	swift_dialog "Don't panic!" "There was an issue updating the following apps: $FAILED_APP_INSTALLS.\n\nDon't Panic! Your apps are probably still usable, they just couldn't be updated for some reason.\n\nPlease launch and test.\n\nIf you're having issues with these applications please submit a ticket to helpdesk@secondsonconsulting.com"  --overlayicon "/System/Applications/App Store.app" &
+	swift_dialog "Don't panic!" "There was an issue updating the following apps: $FAILED_APP_INSTALLS\n\nYour apps are probably still usable, they just couldn't be updated for some reason.\n\nPlease launch and test.\n\nIf you're having issues with these applications please submit a ticket to helpdesk@secondsonconsulting.com"  --overlayicon "/System/Applications/App Store.app" &
+	caffexit 10
 fi
 
 caffexit 0
