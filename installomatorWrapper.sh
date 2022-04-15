@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-#installomatorWrapper.sh v.1.1
+#installomatorWrapper.sh v.1.2
 
 ### USER CONFIGURATION ###
 
