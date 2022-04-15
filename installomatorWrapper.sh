@@ -1,16 +1,23 @@
 #!/bin/zsh
 
-#installomatorWrapper.sh v.1.2
-
-### USER CONFIGURATION ###
+#installomatorWrapper.sh v.0.1.3
 
 DEBUG=0
+
+# No sleeping
+/usr/bin/caffeinate -d -i -m -u &
+caffeinatepid=$!
+caffexit () {
+    kill "$caffeinatepid"
+    pkill caffeinate
+    exit $1
+}
 
 ### Verify Input ###
 
 if [ $# -eq 0 ]; then
 	echo "No arguments provided. Exiting"
-	exit 1
+	caffexit 1
 fi
 
 ###Log file variables setup
@@ -26,7 +33,7 @@ if [ ! -d $LOG_FOLDER ]; then
 	mkdir -p $LOG_FOLDER
 	if [ $? != 0 ]; then
 		echo "Failed to create log folder"
-		exit 1
+		caffexit 1
 	fi
 fi
 
@@ -47,20 +54,20 @@ if [ $LOG_COUNT -ge "$LOG_MAX" ] ; then
 	rm ${LOG_ARRAY[1]}
 	if [ $? != 0 ]; then
 		echo "Failed to rotate logs"
-		exit 1
+		caffexit 1
 	fi
 fi
 
 touch $LOG_FILE
 if [ $? != 0 ]; then
 	echo "Failed to create "$LOG_FILE""
-	exit 1
+	caffexit 1
 fi
 
 touch $MANIFEST_FILE
 if [ $? != 0 ]; then
 	echo "Failed to create "$MANIFEST_FILE""
-	exit 1
+	caffexit 1
 fi
 
 #Test if Installomator is present
@@ -68,7 +75,7 @@ fi
 if [ ! -f /usr/local/Installomator/Installomator.sh ] ; then
 	echo "FAIL: Installomator.sh NOT FOUND"
 	echo ""$LOG_DATE": Installomator Fail - Script not installed" >> $MANIFEST_FILE
-	exit 1
+	caffexit 1
 fi
 
 #Update Installomator
@@ -76,7 +83,7 @@ fi
 if [ $? != 0 ]; then
 	echo "FAILED TO UPDATE INSTALLOMATOR"
 	echo ""$LOG_DATE": Installomator failed to update" >> $MANIFEST_FILE
-	exit 1
+	caffexit 1
 fi
 
 #Install each app
@@ -103,3 +110,5 @@ fi
 for i in ${FAILED_APP_INSTALLS[@]}; do
 	echo "FAILED INSTALL: "$i""
 done
+
+caffexit 0
