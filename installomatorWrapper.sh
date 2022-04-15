@@ -1,5 +1,7 @@
 #!/bin/zsh
 
+#installomatorWrapper.sh v.1.1
+
 ### USER CONFIGURATION ###
 
 DEBUG=0
