@@ -1,8 +1,8 @@
 #!/bin/zsh
 
-#installomatorWrapper.sh v.0.1.6
+#installomatorWrapper.sh v.0.1.7
 
-DEBUG=1
+DEBUG=0
 
 #Debug messaging
 function_debug_message()
@@ -133,13 +133,13 @@ APP_COUNT=$#
 APP_COUNT=$((APP_COUNT+1))
 APP_COMPLETIONS=0
 
-swift_dialog "Updating your apps" "Updates are in progress..." --progress $APP_COUNT --button1text "Hide this progress window" --overlayicon "/System/Applications/App Store.app" &
+swift_dialog "Updating your apps" "Updates are in progress...\n\nYou can dismiss this dialog and we'll keep working in the background." --progress $APP_COUNT --button1text "Hide this progress window" --overlayicon "/System/Applications/App Store.app" &
 
 #Update Installomator
 
 sleep 1
 swift_dialog_command "progress: $APP_COMPLETIONS"
-swift_dialog_command "progresstext: installomator"
+swift_dialog_command "progresstext: We are working on updates for installomator"
 
 /usr/local/Installomator/Installomator.sh installomator >> $LOG_FILE  2>&1
 if [ $? != 0 ]; then
@@ -152,7 +152,7 @@ for APPLICATION in "$@"
 do
     #Update swiftdialog progress bar and message
 	swift_dialog_command "progress: $APP_COMPLETIONS"
-    swift_dialog_command "progresstext: $APPLICATION"
+    swift_dialog_command "progresstext: We are working on updates for $APPLICATION"
     #For usability/viewing
     sleep 1
     /usr/local/Installomator/Installomator.sh $APPLICATION >> $LOG_FILE  2>&1
@@ -183,7 +183,7 @@ done
 
 #If there are no failed apps, give a good message. Otherwise inform the user.
 if [ -z "$FAILED_APP_INSTALLS" ]; then
-	swift_dialog "Updates Completed Successfully" "Thanks for helping keep your apps up to date. \n\nIf you have any issues or questions please submit a ticket to helpdesk@secondsonconsulting.com"  --overlayicon "/System/Applications/App Store.app" &
+	swift_dialog "Updates Completed Successfully" "Thanks for your help keeping your apps up to date. \n\nIf you have any issues or questions please submit a ticket to helpdesk@secondsonconsulting.com"  --overlayicon "/System/Applications/App Store.app" &
 else
 	swift_dialog "Don't panic!" "There was an issue updating the following apps: $FAILED_APP_INSTALLS\n\nYour apps are probably still usable, they just couldn't be updated for some reason.\n\nPlease launch and test.\n\nIf you're having issues with these applications please submit a ticket to helpdesk@secondsonconsulting.com"  --overlayicon "/System/Applications/App Store.app" &
 	caffexit 10
