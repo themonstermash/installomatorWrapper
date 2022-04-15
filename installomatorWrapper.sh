@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-#installomatorWrapper.sh v.0.1.3
+#installomatorWrapper.sh v.0.1.4
 
 DEBUG=0
 
@@ -38,7 +38,7 @@ if [ ! -d $LOG_FOLDER ]; then
 fi
 
 #Rotate logs, keeping only 10 latest
-LOG_ARRAY=( $( ls $LOG_FOLDER/*_Installomator.log | sort ) )
+LOG_ARRAY=( $( ls "$LOG_FOLDER"/*_installomatorWrapper.log | sort ) )
 
 LOG_COUNT=0
 LOG_MAX=10
